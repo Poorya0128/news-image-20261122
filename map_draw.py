@@ -269,7 +269,7 @@ def map_key_lines(stories):
     Line 1: a grey badge "7" (drawn by the caller before this text) +
     "= stories {a}–{b} (cards)", then a grey dot + "= stories {c}–{N}
     (list)". The "●" in the returned string is the grey dot glyph.
-    Line 2: "Colour = region, as in Coverage. No pin: {numbers without
+    Line 2: "Colour = region, as in the bar above. No pin: {numbers without
     coordinates}." Ranges and the no-pin list are computed from the
     story data, never typed by hand.
     Returns (line1, line2).
@@ -282,6 +282,6 @@ def map_key_lines(stories):
     line1 = ("= stories %d–%d (cards)    \u25cf = stories %d–%d (list)"
              % (min(badge_nums), max(badge_nums),
                 min(dot_nums), max(dot_nums)))
-    line2 = ("Colour = region, as in Coverage. No pin: %s."
+    line2 = ("Colour = region, as in the bar above. No pin: %s."
              % (", ".join(str(n) for n in sorted(no_pin)) or "none"))
     return line1, line2
