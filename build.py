@@ -212,6 +212,41 @@ def stage_timeline_numbers(draw):
             draw.rectangle([sx * S, y * S, sx * S + 1, (y + 36) * S],
                            fill=data.RULE)
     rule(draw, y + 41, thickness=0.9)
+
+    # --- Region bar: a full-width coloured strip, one segment per region,
+    # its width in proportion to that region's story count.  The top
+    # entries show coverage this way; our coverage table buried the same
+    # numbers at the bottom of the page.  18 px tall, 2 px below the
+    # numbers rule; the leads start 2 px below the bar.
+    bar_y = y + 43
+    bar_h = 18
+    totals = data.region_totals()
+    total = sum(totals.values())
+    avail = RIGHT - MARGIN
+    labels = {r: "%s %d" % (r, totals[r]) for r in data.REGIONS}
+    raw = {r: avail * totals[r] / total for r in data.REGIONS}
+    min_w = {r: text_w("cond_b", 10, labels[r]) + 10 for r in data.REGIONS}
+    widths = {r: max(raw[r], min_w[r]) for r in data.REGIONS}
+    over = sum(widths.values()) - avail
+    if over > 0:
+        slack = {r: widths[r] - min_w[r] for r in data.REGIONS}
+        total_slack = sum(slack.values())
+        for r in data.REGIONS:
+            widths[r] -= over * slack[r] / total_slack
+    # Integer boundaries (last pinned to RIGHT) so the segments tile
+    # exactly with no gaps.
+    bounds = [MARGIN]
+    acc = 0.0
+    for r in data.REGIONS[:-1]:
+        acc += widths[r]
+        bounds.append(int(round(MARGIN + acc)))
+    bounds.append(RIGHT)
+    for i, r in enumerate(data.REGIONS):
+        x0, x1 = bounds[i], bounds[i + 1]
+        rect(draw, x0, bar_y, x1, bar_y + bar_h,
+             fill=data.REGION_COLORS[r])
+        text(draw, "region_bar_%s" % r, (x0 + x1) / 2, bar_y + bar_h / 2,
+             labels[r], "cond_b", 10, data.WHITE, anchor="mm")
     return y + 41
 
 
@@ -304,8 +339,8 @@ def draw_panel(draw, img, name, box, place, sources, label, picture,
 
 # ------------------------------------------------------------------ stage 3
 def stage_leads(draw, img):
-    """The 3 lead stories (y=234).  Returns (cards_y, rule_y)."""
-    y = 234
+    """The 3 lead stories (y=252).  Returns (cards_y, rule_y)."""
+    y = 252
     col_w = 324
     gap = 14
     bottoms = []
@@ -445,10 +480,10 @@ def coverage_columns():
 
 
 def stage_row_a(draw, img, row_a_y):
-    """Row A: map, Coverage table, How the day changed, Date check.
+    """Row A: map, How the day changed, Date check.
     Returns (briefs_header_y, rule_y)."""
     land = map_draw.load_land(os.path.join(BASE, "world_land.json"))
-    h_a = 134
+    h_a = 126
     # --- Box 1: map ---
     map_x0, map_w = MARGIN, 240
     text(draw, "map_title", map_x0, row_a_y,
@@ -485,118 +520,8 @@ def stage_row_a(draw, img, row_a_y):
     text(draw, "map_key1b", tx, key_y, part2.strip(), "cond", 10.4, data.INK)
     text(draw, "map_key2", map_x0, key_y + 13, key2, "cond", 10.4, data.GREY)
 
-    # --- Box 2: Coverage table ---
-    cov_x, cov_w = 262, 336
-    label_w, all_w, col_w = coverage_columns()
-    header_h = 30
-    # Gap between coverage cells, so rows and columns read as
-    # separate blocks (paper shows through the gutters).
-    gap = 1.0
-    # Rows 0-6 (6 topics + "All") are 12 px tall; the last row ("Top
-    # story") is 20 px tall so its circles can be visibly bigger
-    # (r 9) without touching the lines above and below it.
-    row_h = 12.0
-    top_row_h = 20.0
-    text(draw, "coverage_title", cov_x, row_a_y, "COVERAGE", "cond_b", 11,
-         data.NAVY)
-    text(draw, "coverage_sub", cov_x, row_a_y + 13, "by region", "cond", 10,
-         data.GREY)
-    # Header row: region cells + All cell.
-    hx = cov_x + label_w
-    for region in data.REGIONS:
-        w = col_w[region]
-        rect(draw, hx + gap, row_a_y + gap, hx + w - gap,
-             row_a_y + header_h - gap,
-             fill=data.REGION_COLORS[region])
-        lines = HEADER_LINES[region]
-        if len(lines) == 1:
-            text(draw, "coverage_head_%s" % region, hx + w / 2,
-                 row_a_y + header_h / 2, lines[0], "cond_b", 10, data.WHITE,
-                 anchor="mm")
-        else:
-            text(draw, "coverage_head_%s" % region, hx + w / 2,
-                 row_a_y + header_h / 2 - 5.5, lines[0], "cond_b", 10,
-                 data.WHITE, anchor="mm")
-            text(draw, "coverage_head_%s" % region, hx + w / 2,
-                 row_a_y + header_h / 2 + 5.5, lines[1], "cond_b", 10,
-                 data.WHITE, anchor="mm")
-        hx += w
-    rect(draw, hx + gap, row_a_y + gap, hx + all_w - gap,
-         row_a_y + header_h - gap, fill=data.INK)
-    text(draw, "coverage_head_all", hx + all_w / 2, row_a_y + header_h / 2,
-         "All", "cond_b", 10, data.WHITE, anchor="mm")
-    # Rows: 6 topics, "All {N}", "Top story".
-    matrix = data.coverage_matrix()
-    t_totals = data.topic_totals()
-    r_totals = data.region_totals()
-    top_story = data.top_story_per_region()
-    row_labels = [t.title() for t in data.TOPICS] + ["All %d" % data.N,
-                                                    "Top story"]
-    for i, label in enumerate(row_labels):
-        rh = row_h if i < 7 else top_row_h
-        ry = row_a_y + header_h + i * row_h
-        cy = ry + rh / 2
-        text(draw, "coverage_rowlabel_%d" % i, cov_x, cy, label, "cond_b",
-             10.6, data.INK, anchor="lm")
-        cx = cov_x + label_w
-        for region in data.REGIONS:
-            w = col_w[region]
-            if i < 6:
-                topic = data.TOPICS[i]
-                v = matrix[(topic, region)]
-                if v > 0:
-                    fill, num_colour = blend_cell(
-                        data.REGION_COLORS[region], v)
-                    rect(draw, cx + gap, ry + gap, cx + w - gap,
-                         ry + rh - gap, fill=fill)
-                    text(draw, "coverage_cell_%d_%s" % (i, region),
-                         cx + w / 2, cy, str(v), "cond_b", 10.0, num_colour,
-                         anchor="mm")
-                else:
-                    rect(draw, cx + gap, ry + gap, cx + w - gap,
-                         ry + rh - gap,
-                         fill=data.CELL_EMPTY)
-                    text(draw, "coverage_cell_%d_%s" % (i, region),
-                         cx + w / 2, cy, "\u2013", "cond_b", 10.0, data.GREY,
-                         anchor="mm")
-            elif i == 6:
-                rect(draw, cx + gap, ry + gap, cx + w - gap,
-                     ry + rh - gap, fill=data.INK)
-                text(draw, "coverage_cell_%d_%s" % (i, region),
-                     cx + w / 2, cy, str(r_totals[region]), "cond_b", 10.0,
-                     data.WHITE, anchor="mm")
-            else:
-                rect(draw, cx + gap, ry + gap, cx + w - gap,
-                     ry + rh - gap,
-                     fill=data.CELL_EMPTY)
-                bcx = (cx + w / 2) * S
-                bcy = cy * S
-                H.badge(draw, bcx, bcy, 9 * S, top_story[region],
-                        data.REGION_COLORS[region], outline=2,
-                        number_size=11 * S)
-                record_badge_number(draw, "coverage_top_%s" % region,
-                                    bcx, bcy, top_story[region], 11 * S)
-            cx += w
-        # All column.
-        if i < 6:
-            rect(draw, cx + gap, ry + gap, cx + all_w - gap,
-                 ry + rh - gap, fill=data.CELL_ALL)
-            text(draw, "coverage_all_%d" % i, cx + all_w / 2, cy,
-                 str(t_totals[data.TOPICS[i]]), "cond_b", 10.0, data.INK,
-                 anchor="mm")
-        elif i == 6:
-            rect(draw, cx + gap, ry + gap, cx + all_w - gap,
-                 ry + rh - gap, fill=data.INK)
-            text(draw, "coverage_all_%d" % i, cx + all_w / 2, cy,
-                 str(data.N), "cond_b", 10.0, data.WHITE, anchor="mm")
-        else:
-            rect(draw, cx + gap, ry + gap, cx + all_w - gap,
-                 ry + rh - gap,
-                 fill=data.CELL_EMPTY)
-
-
     # --- Box 3: How the day changed ---
-    box3_x, box3_w = 608, 186
+    box3_x, box3_w = 264, 340
     rect(draw, box3_x, row_a_y, box3_x + box3_w, row_a_y + h_a,
          fill=data.HOW_CHANGED_FILL)
     draw.rectangle([box3_x * S, row_a_y * S,
@@ -614,7 +539,7 @@ def stage_row_a(draw, img, row_a_y):
         ey += used + 4
 
     # --- Box 4: Date check ---
-    box4_x, box4_w = 804, 208
+    box4_x, box4_w = 616, 396
     rect(draw, box4_x, row_a_y, box4_x + box4_w, row_a_y + h_a,
          fill=data.DATE_CHECK_FILL)
     draw.rectangle([box4_x * S, row_a_y * S,
