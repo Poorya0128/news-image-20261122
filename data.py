@@ -477,18 +477,19 @@ NUMBERS = [
 # Section 5.9: "How the day changed".  Each entry: bold lead-in, then
 # regular text that runs on from it.
 HOW_CHANGED = [
-    ("Dymer:", " 2 dead in the morning \u2192 11 by night"),
-    ("COP31:", " final text tabled \u2192 rejected, no deal"),
-    ("Merkury:", " fire seen 05:47 \u2192 capsized; attacker unknown"),
+    ("Dymer:", " 2 dead in the morning \u2192 11 by night. Rescuers pulled 79 out alive as the toll rose."),
+    ("COP31:", " final text tabled \u2192 rejected, no deal. The longest summit ever ended empty-handed."),
+    ("Merkury:", " fire seen 05:47 \u2192 capsized by morning. Who struck is still unknown."),
 ]
 
 # Section 5.10: "Date check".  The first line carries a {N} placeholder
 # for the story count; fill it with date_check_lines().  Each entry is a
 # (bold lead-in, regular text) pair.
 DATE_CHECK = [
-    ("", "All {N} stories happened, or were first reported, on Sun 22 Nov (UTC)."),
+    ("", "Every one of the {N} stories on this page happened on Sunday 22 Nov 2026 (UTC) \u2014 we checked each one."),
     ("Left out, Sat 21:", " Peru M6.7 quake and its toll, \u2018El Chapo Isidro\u2019 arrest, Bahrain strike."),
     ("Mon 23:", " 49ers\u2013Vikings (kick-off 01:20)."),
+    ("", "If it happened on another day, it is not here."),
 ]
 
 # Section 5.11: footer legend definitions, in display order.
