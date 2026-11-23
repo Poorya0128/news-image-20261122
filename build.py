@@ -202,8 +202,8 @@ def stage_timeline_numbers(draw):
     col_w = (RIGHT - 84) / 6.0
     for i, (figure, label) in enumerate(data.NUMBERS):
         cx = 84 + (i + 0.5) * col_w
-        text(draw, "numbers_fig_%d" % i, cx, y - 2, figure, "serif_b", 23,
-             data.INK, anchor="ma")
+        text(draw, "numbers_fig_%d" % i, cx, y - 2, figure, "serif_b", 28,
+             data.RED, anchor="ma")
         text(draw, "numbers_label_%d" % i, cx, y + 23, label, "cond", 10.8,
              data.GREY, anchor="ma")
         if i:
